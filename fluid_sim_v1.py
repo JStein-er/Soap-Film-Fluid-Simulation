@@ -49,8 +49,8 @@ solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time
 
 # Initial conditions
-u['g'][0] = -0.1 # Initial downward velocity
-s['g'] = u['g'][0] # Matches tracer to shear
+u['g'][0] = np.tanh((z - Lz/2)/0.2) #Upper fluid moving right lower fluid moving left
+s['g'] = np.exp(-((x - 1.0)**2 + (z - 4.0)**2)/0.05) # Dye blob init
 
 # Analysis
 snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.25, max_writes=50)
