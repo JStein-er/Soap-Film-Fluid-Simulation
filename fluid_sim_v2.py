@@ -27,7 +27,7 @@ tau_u2 = dist.VectorField(coords,name='tau_u2', bases=xbasis)
 
 # Substitutions
 nu = .05
-g = 1
+kappa = 1e-3
 x, z = dist.local_grids(xbasis, zbasis)
 ex, ez = coords.unit_vector_fields(dist)
 lift_basis = zbasis.derivative_basis(1)
@@ -38,7 +38,7 @@ grad_u = d3.grad(u) + ez*lift(tau_u1)
 problem = d3.IVP([u, p, s, tau_p, tau_u1, tau_u2], namespace=locals())
 problem.add_equation("trace(grad_u) + tau_p = 0") # Incompressible fluid
 problem.add_equation("dt(u) - nu*div(grad_u) + grad(p) + lift(tau_u2) = - u@grad(u)") # Navier-Stokes for velocity field
-problem.add_equation("dt(s) - nu*lap(s) = - u@grad(s)")
+problem.add_equation("dt(s) - kappa*lap(s) = - u@grad(s)")
 # No slip conditions at boundaries
 problem.add_equation("u(z=0) = 0")
 problem.add_equation("u(z=Lz) = 0")
@@ -49,8 +49,9 @@ solver = problem.build_solver(timestepper)
 solver.stop_sim_time = stop_sim_time
 
 # Initial conditions
-u['g'][1] = np.tanh((z - Lz/2)/0.2) #Upper fluid moving right lower fluid moving left
+u['g'][0] = np.tanh((z - Lz/2)/0.2) #Upper fluid moving right lower fluid moving left
 s['g'] = 2*np.exp(-((x - 1.0)**2 + (z - 4.0)**2)/0.05) # Dye blob init
+u['g'][1] += 0.01*np.sin(2*np.pi*x/Lx) * np.exp(-((z-Lz/2)**2)/0.2) # Vertical perturbations to seed instability
 
 
 # Analysis
