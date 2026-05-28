@@ -109,8 +109,8 @@ def main():
 
     fields = {}
 
-    Lx, Lz = 2, 8
-    Nx, Nz = 256, 64
+    Nx, Nz = 512, 128
+    Lx, Lz = 16, 2
 
     x = np.linspace(0, Lx, Nx)
     z = np.linspace(0, Lz, Nz)
