@@ -109,6 +109,16 @@ def main():
 
     fields = {}
 
+    Lx, Lz = 2, 8
+    Nx, Nz = 256, 64
+
+    x = np.linspace(0, Lx, Nx)
+    z = np.linspace(0, Lz, Nz)
+
+    X, Z = np.meshgrid(x, z)
+
+    stride = 4
+
     for name in task_names:
         fields[name] = {
             "files": [],
@@ -183,19 +193,45 @@ def main():
             dset, idx = timeline[name][frame]
             data = dset[idx]
 
+            # VECTOR FIELD
             if field["type"] == "vector":
-                arr = np.sqrt(np.sum(data**2, axis=0))
+
+                ux = data[1]
+                uz = data[0]
+
+                speed = np.sqrt(ux**2 + uz**2)
+
+                im = ax.imshow(
+                    speed,
+                    origin="lower",
+                    aspect="auto",
+                    extent=[0, Lx, 0, Lz],
+                    cmap="viridis"
+                )
+
+                ax.quiver(
+                    X[::stride, ::stride],
+                    Z[::stride, ::stride],
+                    ux[::stride, ::stride],
+                    uz[::stride, ::stride],
+                    color='white',
+                    scale=25
+                )
+
+            # SCALAR FIELD
             else:
+
                 arr = data
 
-            im = ax.imshow(
-                arr,
-                origin="lower",
-                aspect="auto",
-                cmap="RdBu_r",
-                vmin=field["vmin"],
-                vmax=field["vmax"]
-            )
+                im = ax.imshow(
+                    arr,
+                    origin="lower",
+                    aspect="auto",
+                    extent=[0, Lx, 0, Lz],
+                    cmap="RdBu_r",
+                    vmin=field["vmin"],
+                    vmax=field["vmax"]
+                )
 
             ax.set_title(f"{name} | frame {frame}")
 
