@@ -169,6 +169,8 @@ def main():
     axes = axes.flatten()
 
     def update(frame):
+        
+        print(f"\rRendering frame {frame+1}/{num_frames}", end="")
 
         fig.clf()
         axes = fig.subplots(n_tasks, 1).flatten()
@@ -199,6 +201,7 @@ def main():
 
             plt.colorbar(im, ax=ax, fraction=0.046)
 
+
         return axes
 
     anim = FuncAnimation(
@@ -217,7 +220,7 @@ def main():
 
     anim.save(output_name, writer=writer)
 
-    print("Done.")
+    print("\nDone.")
 
     for file in open_files:
         file.close()
