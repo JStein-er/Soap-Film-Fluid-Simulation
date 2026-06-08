@@ -109,15 +109,15 @@ def main():
 
     fields = {}
 
-    Nx, Nz = 512, 128
-    Lx, Lz = 16, 2
+    Nx, Nz = open_files[0]['tasks']['velocity'].shape[-2], open_files[0]['tasks']['velocity'].shape[-1]
+    Lx, Lz = 1, 2
 
     x = np.linspace(0, Lx, Nx)
-    z = np.linspace(0, Lz, Nz)
+    z = np.linspace(-Lz/2, Lz/2, Nz)
 
     X, Z = np.meshgrid(x, z)
 
-    stride = 4
+    stride = 4 # Stride for quiver plot to avoid overcrowding
 
     for name in task_names:
         fields[name] = {
@@ -170,10 +170,10 @@ def main():
     n_tasks = len(task_names)
 
     fig, axes = plt.subplots(
-        n_tasks,
-        1,
-        figsize=(8, 4 * n_tasks),
-        squeeze=False
+        2, # Number of rows
+        n_tasks, # Number of columns
+        figsize=(4*n_tasks, 8), # Adjust height based on number of tasks
+        squeeze=False # Always return 2D array of axes
     )
 
     axes = axes.flatten()
@@ -183,7 +183,7 @@ def main():
         print(f"\rRendering frame {frame+1}/{num_frames}", end="")
 
         fig.clf()
-        axes = fig.subplots(n_tasks, 1).flatten()
+        axes = fig.subplots(1, n_tasks).flatten()
 
         for i, name in enumerate(task_names):
 
@@ -196,16 +196,16 @@ def main():
             # VECTOR FIELD
             if field["type"] == "vector":
 
-                ux = data[1]
-                uz = data[0]
+                ux = data[0].T # 
+                uz = -1*data[1].T # Flip z-velocity for correct direction in plot
 
                 speed = np.sqrt(ux**2 + uz**2)
 
-                im = ax.imshow(
-                    speed,
-                    origin="lower",
-                    aspect="auto",
-                    extent=[0, Lx, 0, Lz],
+                im = ax.imshow( # Plot speed as background
+                    speed, 
+                    origin="lower", # Set origin to lower left
+                    aspect="auto", # Adjust aspect ratio to fit domain
+                    extent=[0, Lx, -Lz/2, Lz/2], # Set extent to match physical domain
                     cmap="viridis"
                 )
 
@@ -215,19 +215,18 @@ def main():
                     ux[::stride, ::stride],
                     uz[::stride, ::stride],
                     color='white',
-                    scale=25
                 )
 
             # SCALAR FIELD
             else:
 
-                arr = data
+                arr = data.T
 
                 im = ax.imshow(
                     arr,
                     origin="lower",
                     aspect="auto",
-                    extent=[0, Lx, 0, Lz],
+                    extent=[-Lx/2, Lx/2, 0, Lz],
                     cmap="RdBu_r",
                     vmin=field["vmin"],
                     vmax=field["vmax"]
