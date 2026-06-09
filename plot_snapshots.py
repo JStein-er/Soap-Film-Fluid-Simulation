@@ -249,7 +249,7 @@ def main():
 
     writer = FFMpegWriter(fps=20, codec='libx264', extra_args=['-pix_fmt', 'yuv420p'])
 
-    output_name = str(input("Enter name for file: "))
+    output_name = str(input("Enter name for file: ")+".mp4")
 
     print(f"\nSaving movie: {output_name}")
 
