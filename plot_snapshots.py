@@ -204,27 +204,27 @@ def main():
                 im = ax.imshow( # Plot speed as background
                     speed, 
                     origin="lower", # Set origin to lower left
-                    aspect="auto", # Adjust aspect ratio to fit domain
-                    extent=[0, Lx, -Lz/2, Lz/2], # Set extent to match physical domain
+                    aspect="equal", # Adjust aspect ratio to fit domain
+                    extent=[-Lx/2, Lx/2, 0, Lz], # Set extent to match physical domain
                     cmap="viridis"
                 )
 
-                ax.streamplot(
+                """ax.streamplot(
                     x,
                     z,
                     ux.T,
                     uz.T,
-                    density=1.5,
+                    density=1.75,
                     color='white'
-                )
+                )"""
 
-                """ax.quiver(
+                ax.quiver(
                     X[::stride, ::stride],
                     Z[::stride, ::stride],
                     ux[::stride, ::stride],
                     uz[::stride, ::stride],
                     color='white',
-                )"""
+                )
 
             # SCALAR FIELD
             else:
@@ -234,7 +234,7 @@ def main():
                 im = ax.imshow(
                     arr,
                     origin="lower",
-                    aspect="auto",
+                    aspect="equal",
                     extent=[-Lx/2, Lx/2, 0, Lz],
                     cmap="RdBu_r",
                     vmin=field["vmin"],
@@ -243,7 +243,7 @@ def main():
 
             ax.set_title(f"{name} | frame {frame}")
 
-            plt.colorbar(im, ax=ax, fraction=0.046)
+            plt.colorbar(im, ax=ax, fraction=0.046) 
 
 
         return axes
