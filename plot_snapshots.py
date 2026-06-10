@@ -112,8 +112,8 @@ def main():
     Nx, Nz = open_files[0]['tasks']['velocity'].shape[-2], open_files[0]['tasks']['velocity'].shape[-1]
     Lx, Lz = 1, 2
 
-    x = np.linspace(0, Lx, Nx)
-    z = np.linspace(-Lz/2, Lz/2, Nz)
+    x = np.linspace(-Lx/2, Lx/2, Nx)
+    z = np.linspace(0, Lz, Nz)
 
     X, Z = np.meshgrid(x, z)
 
@@ -209,13 +209,22 @@ def main():
                     cmap="viridis"
                 )
 
-                ax.quiver(
+                ax.streamplot(
+                    x,
+                    z,
+                    ux.T,
+                    uz.T,
+                    density=1.5,
+                    color='white'
+                )
+
+                """ax.quiver(
                     X[::stride, ::stride],
                     Z[::stride, ::stride],
                     ux[::stride, ::stride],
                     uz[::stride, ::stride],
                     color='white',
-                )
+                )"""
 
             # SCALAR FIELD
             else:
