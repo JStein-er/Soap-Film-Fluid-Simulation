@@ -5,10 +5,10 @@ logger = logging.getLogger(__name__)
 
 Nx, Nz = 64, 64
 Lx, Lz = 1, 2
-Reynolds = 500 
+Reynolds = 5000
 Schmidt = 1
 dealias = 3/2
-stop_sim_time = 30
+stop_sim_time = 100
 timestepper = d3.RK222
 max_timestep = 0.002
 dtype = np.float64
@@ -29,6 +29,8 @@ tau_u2 = dist.VectorField(coords,name='tau_u2', bases=zbasis) # Tau field for ve
 # Substitutions
 nu = 1 / Reynolds # Viscosity
 g = .1
+delta = 0.05
+U0 = 0.2
 x, z = dist.local_grids(xbasis, zbasis)
 ex, ez = coords.unit_vector_fields(dist)
 lift_basis = xbasis.derivative_basis(1)
@@ -37,7 +39,7 @@ grad_u = d3.grad(u) + ex*lift(tau_u1)
 
 # Problem
 problem = d3.IVP([u, p, tau_p, tau_u1, tau_u2], namespace=locals())
-problem.add_equation("dt(u) + grad(p) - nu*div(grad_u) + lift(tau_u2) = - u@grad(u) + g*ez") # Navier-Stokes for velocity field
+problem.add_equation("dt(u) + grad(p) - nu*div(grad_u) + lift(tau_u2) = - u@grad(u) - g*ez") # Navier-Stokes for velocity field
 problem.add_equation("trace(grad_u) + tau_p = 0") # Incompressibility condition
 problem.add_equation("integ(p) = 0") # Pressure gauge
 problem.add_equation("u(x=-Lx/2) = 0") # No-slip at left
@@ -51,8 +53,10 @@ solver.stop_sim_time = stop_sim_time
 # Initial conditions
 u.require_grid_space()
 #u['g'][1] = 0.1 * (1 - (2*x/Lx)**2) #
-u['g'][1] = 0.5*np.exp(-(x)**2) # Gaussian profile for initial condition
-u['g'][0] = np.cos(z) # Initial condition for u_x
+#u['g'][1] = 0.5*np.exp(-(x)**2) 
+#u['g'][0] = np.cos(z) 
+u['g'][1] = U0*np.tanh(x/delta)
+u['g'][0] = np.cos(2*np.pi*z/Lz)
 
 
 # Analysis (Fields saved for visualization)
