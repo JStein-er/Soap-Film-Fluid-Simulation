@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
 from natsort import natsorted
+from scipy.ndimage import gaussian_filter
 
 from dedalus.extras.plot_tools import plot_bot
 
@@ -110,7 +111,7 @@ def main():
     fields = {}
 
     Nx, Nz = open_files[0]['tasks']['velocity'].shape[-2], open_files[0]['tasks']['velocity'].shape[-1]
-    Lx, Lz = 1, 2
+    Lx, Lz = 1, 3
 
     x = np.linspace(-Lx/2, Lx/2, Nx)
     z = np.linspace(0, Lz, Nz)
@@ -196,8 +197,8 @@ def main():
             # VECTOR FIELD
             if field["type"] == "vector":
 
-                ux = data[0].T # 
-                uz = -1*data[1].T # Flip z-velocity for correct direction in plot
+                ux = data[0].T 
+                uz = data[1].T 
 
                 speed = np.sqrt(ux**2 + uz**2)
 
@@ -206,6 +207,7 @@ def main():
                     origin="lower", # Set origin to lower left
                     aspect="equal", # Adjust aspect ratio to fit domain
                     extent=[-Lx/2, Lx/2, 0, Lz], # Set extent to match physical domain
+                    interpolation="nearest",
                     cmap="viridis"
                 )
 
@@ -229,21 +231,24 @@ def main():
             # SCALAR FIELD
             else:
 
-                arr = data.T
+                omega = data.T
+                omega_vis = gaussian_filter(omega, sigma=1)
+                scale = np.percentile(np.abs(omega), 95)
 
                 im = ax.imshow(
-                    arr,
+                    omega_vis,
                     origin="lower",
-                    aspect="equal",
+                    aspect="auto",
                     extent=[-Lx/2, Lx/2, 0, Lz],
+                    interpolation="nearest",
                     cmap="RdBu_r",
-                    vmin=field["vmin"],
-                    vmax=field["vmax"]
+                    vmin=-scale,
+                    vmax=scale
                 )
 
             ax.set_title(f"{name} | frame {frame}")
 
-            plt.colorbar(im, ax=ax, fraction=0.046) 
+            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.02) 
 
 
         return axes
