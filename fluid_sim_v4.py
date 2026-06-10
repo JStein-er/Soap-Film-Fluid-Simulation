@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-Nx, Nz = 192, 96
+Nx, Nz = 384, 192
 Lx, Lz = 1, 3
 Reynolds = 5000 
 Schmidt = 1
@@ -43,7 +43,7 @@ grad_u = d3.grad(u) + ex*lift(tau_u1)
 
 
 # Obstacle parameters
-xc, zc = 0.0, Lz/2   # center of domain
+xc, zc = 0.0, Lz*2/3   # center of cylinder
 r0 = 0.08            # radius of cylinder
 eta = 1e-2          # penalization strength
 sigma = 0.01         # width of penalization layer
@@ -52,7 +52,8 @@ sigma = 0.01         # width of penalization layer
 r2 = (x - xc)**2 + (z - zc)**2
 
 # Mask (1 inside cylinder, 0 outside)
-chi = np.exp(-((np.sqrt(r2) - r0)**2) / sigma**2)
+#chi = np.exp(-((np.sqrt(r2) - r0)**2) / sigma**2)
+chi = 0.5*(1 - np.tanh((np.sqrt(r2)-r0)/sigma))
 mask['g'] = chi
 
 
