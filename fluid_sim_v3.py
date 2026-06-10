@@ -8,7 +8,7 @@ Lx, Lz = 1, 2
 Reynolds = 500 
 Schmidt = 1
 dealias = 3/2
-stop_sim_time = 20
+stop_sim_time = 30
 timestepper = d3.RK222
 max_timestep = 0.002
 dtype = np.float64
@@ -28,7 +28,7 @@ tau_u2 = dist.VectorField(coords,name='tau_u2', bases=zbasis) # Tau field for ve
 
 # Substitutions
 nu = 1 / Reynolds # Viscosity
-g = 1
+g = .1
 x, z = dist.local_grids(xbasis, zbasis)
 ex, ez = coords.unit_vector_fields(dist)
 lift_basis = xbasis.derivative_basis(1)
@@ -50,15 +50,17 @@ solver.stop_sim_time = stop_sim_time
 
 # Initial conditions
 u.require_grid_space()
-u['g'][1] = 0.1 * (1 - (2*x/Lx)**2)
+#u['g'][1] = 0.1 * (1 - (2*x/Lx)**2) #
+u['g'][1] = 0.5*np.exp(-(x)**2) # Gaussian profile for initial condition
+u['g'][0] = np.cos(z) # Initial condition for u_x
 
 
 # Analysis (Fields saved for visualization)
 snapshots = solver.evaluator.add_file_handler('snapshots', sim_dt=0.25, max_writes=50)
 snapshots.add_task(-d3.div(d3.skew(u)), name='vorticity')
 snapshots.add_task(u, name='velocity')
-snapshots.add_task(u@ex, name='ux')
-snapshots.add_task(u@ez, name='uz')
+#snapshots.add_task(u@ex, name='ux')
+#snapshots.add_task(u@ez, name='uz')
 #snapshots.add_task(p, name='pressure')
 
 # CFL
