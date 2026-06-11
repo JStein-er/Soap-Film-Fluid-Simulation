@@ -4,14 +4,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-Nx, Nz = 384, 192
+Nx, Nz = 256, 256
 Lx, Lz = 1, 3
 Reynolds = 5000 
 Schmidt = 1
 dealias = 3/2
-stop_sim_time = 100
+stop_sim_time = 200
 timestepper = d3.RK222
-max_timestep = 0.002
+max_timestep = 0.01
 dtype = np.float64
 
 
@@ -28,18 +28,26 @@ p = dist.Field(name='p', bases=(xbasis,zbasis)) # Pressure field
 tau_p = dist.Field(name='tau_p') # Tau field for pressure (enforces incompressibility)
 tau_u1 = dist.VectorField(coords, name='tau_u1', bases=zbasis) # Tau field for velocity (enforces boundary conditions)
 tau_u2 = dist.VectorField(coords,name='tau_u2', bases=zbasis) # Tau field for velocity (enforces boundary conditions)
-mask = dist.Field(name='mask', bases=(xbasis,zbasis))
+obstacle_mask = dist.Field(name='obstacle_mask', bases=(xbasis,zbasis))
+top_mask = dist.Field(name='top_mask', bases=(xbasis,zbasis))
+bottom_sponge = dist.Field(name='bottom_sponge', bases=(xbasis,zbasis))
 
 
 # Substitutions
 nu = 1 / Reynolds # Viscosity
-g = .01
+g = .1
 R = 0.1
 x, z = dist.local_grids(xbasis, zbasis)
 ex, ez = coords.unit_vector_fields(dist)
 lift_basis = xbasis.derivative_basis(1)
 lift = lambda A: d3.Lift(A, lift_basis, -1)
 grad_u = d3.grad(u) + ex*lift(tau_u1)
+
+# Sponge method parameters
+Uin = -0.1 # Inflow velocity
+sponge_eta = .1
+top_mask['g'] = np.exp(-(z-Lz)**2/(0.15**2)) # Force near top to drive inflow
+bottom_sponge['g'] = np.exp(-(z)**2/(0.15**2)) # Dampen near bottom to prevent reflections
 
 
 # Obstacle parameters
@@ -52,14 +60,14 @@ sigma = 0.01         # width of penalization layer
 r2 = (x - xc)**2 + (z - zc)**2
 
 # Mask (1 inside cylinder, 0 outside)
-#chi = np.exp(-((np.sqrt(r2) - r0)**2) / sigma**2)
 chi = 0.5*(1 - np.tanh((np.sqrt(r2)-r0)/sigma))
-mask['g'] = chi
+obstacle_mask['g'] = chi
 
 
 # Problem
 problem = d3.IVP([u, p, tau_p, tau_u1, tau_u2], namespace=locals())
-problem.add_equation("dt(u) + grad(p) - nu*div(grad_u) + lift(tau_u2) = - u@grad(u) - g*ez - (mask/eta)*u") # Navier-Stokes for velocity field
+problem.add_equation("dt(u) + grad(p) - nu*div(grad_u) + lift(tau_u2) ="
+" - u@grad(u) - g*ez - (obstacle_mask/eta)*u - (top_mask/sponge_eta)*(u-Uin*ez) - (bottom_sponge/sponge_eta)*u") # Navier-Stokes for velocity field
 problem.add_equation("trace(grad_u) + tau_p = 0") # Incompressibility condition
 problem.add_equation("integ(p) = 0") # Pressure gauge
 problem.add_equation("u(x=-Lx/2) = 0") # No-slip at left
@@ -74,7 +82,7 @@ solver.stop_sim_time = stop_sim_time
 # Initial conditions
 u.require_grid_space()
 u['g'][1] = -0.1 * (1 - (2*x/Lx)**2)
-u['g'][0] = 0.0
+u['g'][0] = np.random.rand(*u['g'][0].shape)*0.01 # Small random perturbation to trigger instabilities
 u['g'] *= (1 - chi)
 
 
